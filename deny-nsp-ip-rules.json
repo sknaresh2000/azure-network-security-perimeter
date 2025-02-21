@@ -1,0 +1,74 @@
+{
+    "mode": "All",
+    "policyRule": {
+        "if": {
+            "allOf": [
+                {
+                    "field": "type",
+                    "equals": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules"
+                },
+                {
+                    "field": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules/direction",
+                    "equals": "Inbound"
+                },
+                {
+                    "anyOf": [
+                        {
+                            "count": {
+                                "field": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules/subscriptions[*]"
+                            },
+                            "greater": 0
+                        },
+                        {
+                            "not": {
+                                "count": {
+                                    "field": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules/addressPrefixes[*]",
+                                    "where": {
+                                        "count": {
+                                            "value": "[parameters('allowedIPAddresses')]",
+                                            "name": "allowedIpAddress",
+                                            "where": {
+                                                "value": "[ipRangeContains(current('allowedIpAddress'), current('Microsoft.Network/networkSecurityPerimeters/profiles/accessRules/addressPrefixes[*]'))]",
+                                                "equals": true
+                                            }
+                                        },
+                                        "greater": 0
+                                    }
+                                },
+                                "equals": "[length(field('Microsoft.Network/networkSecurityPerimeters/profiles/accessRules/addressPrefixes[*]'))]"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "then": {
+            "effect": "[parameters('effect')]"
+        }
+    },
+    "parameters": {
+        "effect": {
+            "type": "String",
+            "metadata": {
+                "displayName": "Effect",
+                "description": "Enable or disable the execution of the policy"
+            },
+            "allowedValues": [
+                "Audit",
+                "Deny",
+                "Disabled"
+            ],
+            "defaultValue": "Deny"
+        },
+        "allowedIPAddresses": {
+            "type": "Array",
+            "metadata": {
+                "displayName": "Allowed IP addresses",
+                "description": "Array with allowed public IP addresses."
+            },
+            "defaultValue": [
+                
+            ]
+        }
+    }
+}
