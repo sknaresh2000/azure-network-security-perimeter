@@ -5,48 +5,21 @@ data "http" "myip" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "rg-nsp-micro-hack-eus"
+  name     = "rg-nsp-eus"
   location = var.location
   tags = {
-    purpose = "NSP-Micro-Hack"
+    purpose = "Network_Security_Perimeter"
   }
 }
 
-resource "azapi_resource" "nsp" {
-  for_each  = var.enable_nsp ? toset(["nsp"]) : toset([])
-  type      = "Microsoft.Network/networkSecurityPerimeters@2023-08-01-preview"
-  parent_id = azurerm_resource_group.rg.id
-  name      = "nsp-eus"
-  location  = var.location
-}
-
-resource "azapi_resource" "nsp_profile" {
-  for_each  = var.enable_nsp ? toset(["nsp"]) : toset([])
-  type      = "Microsoft.Network/networkSecurityPerimeters/profiles@2023-08-01-preview"
-  parent_id = azapi_resource.nsp[each.key].id
-  name      = "paas_boundary"
-  location  = var.location
-}
-
-resource "azapi_resource" "inbound_access_rules" {
-  for_each  = var.enable_nsp ? toset(["access_rule"]) : toset([])
-  parent_id = azapi_resource.nsp_profile["nsp"].id
-  type      = "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-08-01-preview"
-  name      = "inbound_access_rules"
-  location  = var.location
-  body = {
-    properties = {
-      addressPrefixes = ["${chomp(data.http.myip.response_body)}/32"]
-      direction       = "Inbound"
-    }
-  }
-}
+### User Assigned Identity for Storage Account to access keys in key vault
 resource "azurerm_user_assigned_identity" "uai" {
   location            = var.location
   name                = "uai-nsp-eus"
   resource_group_name = azurerm_resource_group.rg.name
 }
 
+# assign UAI sufficient permissions to retrieve keys from key vault
 resource "azurerm_role_assignment" "cmk_role_assignment" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Crypto Service Encryption User"
@@ -61,7 +34,7 @@ resource "azurerm_role_assignment" "key_role_assignment" {
 }
 
 resource "azurerm_storage_account" "sa" {
-  name                             = "stonspeus001"
+  name                             = "stonspeus01"
   resource_group_name              = azurerm_resource_group.rg.name
   location                         = var.location
   account_tier                     = "Standard"
@@ -87,7 +60,7 @@ resource "azurerm_storage_account" "sa" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                          = "kvnspeus001"
+  name                          = "kvnspeus01"
   resource_group_name           = azurerm_resource_group.rg.name
   location                      = var.location
   tenant_id                     = data.azurerm_client_config.current.tenant_id
@@ -126,6 +99,53 @@ resource "azurerm_key_vault_key" "key" {
   }
 }
 
+resource "azurerm_eventhub_namespace" "ehn" {
+  name                          = "ehnnspeus01"
+  resource_group_name           = azurerm_resource_group.rg.name
+  location                      = var.location
+  sku                           = "Standard"
+  capacity                      = 1
+  public_network_access_enabled = false
+}
+
+resource "azurerm_eventhub" "eh" {
+  name                = "ehnspeus01"
+  resource_group_name = azurerm_resource_group.rg.name
+  namespace_name      = azurerm_eventhub_namespace.ehn.name
+  partition_count     = 2
+  message_retention   = 1
+}
+
+resource "azapi_resource" "nsp" {
+  for_each  = var.enable_nsp ? toset(["nsp"]) : toset([])
+  type      = "Microsoft.Network/networkSecurityPerimeters@2023-08-01-preview"
+  parent_id = azurerm_resource_group.rg.id
+  name      = "nsp-eus"
+  location  = var.location
+}
+
+resource "azapi_resource" "nsp_profile" {
+  for_each  = var.enable_nsp ? toset(["nsp"]) : toset([])
+  type      = "Microsoft.Network/networkSecurityPerimeters/profiles@2023-08-01-preview"
+  parent_id = azapi_resource.nsp[each.key].id
+  name      = "paas_boundary"
+  location  = var.location
+}
+
+resource "azapi_resource" "inbound_access_rules" {
+  for_each  = var.enable_nsp ? toset(["access_rule"]) : toset([])
+  parent_id = azapi_resource.nsp_profile["nsp"].id
+  type      = "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules@2023-08-01-preview"
+  name      = "inbound_access_rules"
+  location  = var.location
+  body = {
+    properties = {
+      addressPrefixes = ["${chomp(data.http.myip.response_body)}/32"]
+      direction       = "Inbound"
+    }
+  }
+}
+
 resource "azapi_resource" "resource_associations" {
   for_each  = var.enable_nsp ? local.resources_to_associate : {}
   type      = "Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview"
@@ -145,6 +165,35 @@ resource "azapi_resource" "resource_associations" {
   }
 }
 
+#### NSP Logging
+resource "azurerm_log_analytics_workspace" "law" {
+  name                = "lawnspeus01"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
+resource "azurerm_monitor_diagnostic_setting" "nsp-logging" {
+  for_each                   = var.enable_nsp ? toset(["nsp"]) : toset([])
+  name                       = "nsp-diag"
+  target_resource_id         = azapi_resource.nsp[each.value].id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "paas_resources" {
+  for_each                   = { for k, v in local.resources_to_associate : k => v if k != "storage" }
+  name                       = "diag"
+  target_resource_id         = each.value.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
 locals {
   resources_to_associate = {
     kv = {
@@ -154,6 +203,14 @@ locals {
     storage = {
       name = azurerm_storage_account.sa.name
       id   = azurerm_storage_account.sa.id
+    }
+    eventhub = {
+      name = azurerm_eventhub_namespace.ehn.name
+      id   = azurerm_eventhub_namespace.ehn.id
+    }
+    law = {
+      name = azurerm_log_analytics_workspace.law.name
+      id   = azurerm_log_analytics_workspace.law.id
     }
   }
 }
