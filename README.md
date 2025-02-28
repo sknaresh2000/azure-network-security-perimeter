@@ -1,4 +1,4 @@
-# **Azure Network Security Perimeter**
+# 🔐 **Azure Network Security Perimeter**
 
 # Contents
 [Introduction](#introduction)
@@ -25,6 +25,8 @@ After completing this, you will be able to :
 ## Lab
 The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspace and NSP. Key Vault will be used for Storage Account to enable encryption. Event Hub will be used to demonstrate centralized access control without enabling firewall access on the service level. Log Analytics workspace will be used for sending all of the NSP and service level logs.
 
+📌 **NOTE** : The identity used to provision resources should have *Contributor* and *Role Based Access Control Administrator* permissions. If you are going to execute Task 5, you will need *Resource Policy Contributor* permissions as well.
+
 ![image](images/NSP-AzurePolicy.png)
 
 ## Tasks
@@ -38,11 +40,11 @@ Run the following command to deploy Storage Account, Key Vault, Event Hub and Lo
 
 Enable encryption for Storage Account by providing the key created in previous step and check if it can access Key Vault.
 
-**NOTE** : You can use POSTMAN and send event to Event Hub utilizing REST API's by following the link - https://learn.microsoft.com/en-us/rest/api/eventhub/send-event
+📌 **NOTE** : You can use POSTMAN and send event to Event Hub utilizing REST API's by following the link - https://learn.microsoft.com/en-us/rest/api/eventhub/send-event
 
 `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_encryption=true"`
 
-**Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
+💡 **Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
 
 3. **Enable NSP and secure the resources**
 
@@ -56,7 +58,7 @@ Enable encryption now as NSP is configured and all resources are associated to t
 
 `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true" -var "enable_encryption=true"`
 
-**Expected Result:** Encryption now works! The storage account is successfully able to retrieve the encryption key from Key Vault. Event Hub now works, because NSP automatically allows the local client's IP through the Terraform-defined inbound access rules.
+💡 **Expected Result:** Encryption now works! The storage account is successfully able to retrieve the encryption key from Key Vault. Event Hub now works, because NSP automatically allows the local client's IP through the Terraform-defined inbound access rules.
 
 5. **(*OPTIONAL*) Configure Azure Policy for NSP**
 
@@ -64,7 +66,7 @@ This is totally optional but if you would like to ensure only allowed ip ranges 
 
 `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_nsp=true" -var "enable_encryption=true" -var "configure_nsp_policy=true"`
 
-**Expected Result:** Azure Policy kicks in and ensures only allowed ranges mentioned in the policy is allowed.
+💡 **Expected Result:** Azure Policy kicks in and ensures only allowed ranges mentioned in the policy is allowed.
 
 6. **Delete all resources**
 
