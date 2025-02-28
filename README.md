@@ -30,13 +30,13 @@ The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspa
 ![image](images/NSP-AzurePolicy.png)
 
 ## Tasks
-1. **Deploy the Required Resources**
+> **Deploy the Required Resources**
 
 Run the following command to deploy Storage Account, Key Vault, Event Hub and Log Analytics Workspace. After successful execution, you'll see all resources created.
 
 `terraform apply -var "subscription_id=<your_subscription_id>"`
 
-2. **Enable Encryption Without NSP and Test EventHub**
+> **Enable Encryption Without NSP and Test EventHub**
 
 Enable encryption for Storage Account by providing the key created in previous step and check if it can access Key Vault.
 
@@ -46,13 +46,13 @@ Enable encryption for Storage Account by providing the key created in previous s
 
 💡 **Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
 
-3. **Enable NSP and secure the resources**
+> **Enable NSP and secure the resources**
 
 Create Network Security Perimeter and associate all resources to Network Security Perimeter Profile.
 
 `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true"`
 
-4. **Test Encryption & Event Hub**
+> **Test Encryption & Event Hub**
 
 Enable encryption now as NSP is configured and all resources are associated to the profile.
 
@@ -60,7 +60,7 @@ Enable encryption now as NSP is configured and all resources are associated to t
 
 💡 **Expected Result:** Encryption now works! The storage account is successfully able to retrieve the encryption key from Key Vault. Event Hub now works, because NSP automatically allows the local client's IP through the Terraform-defined inbound access rules.
 
-5. **(*OPTIONAL*) Configure Azure Policy for NSP**
+> **(*OPTIONAL*) Configure Azure Policy for NSP**
 
 This is totally optional but if you would like to ensure only allowed ip ranges are configured for inbound access rules in NSP. Once below command is run, try to update the inbound access rules by changing to a different IP range. 
 
@@ -68,7 +68,7 @@ This is totally optional but if you would like to ensure only allowed ip ranges 
 
 💡 **Expected Result:** Azure Policy kicks in and ensures only allowed ranges mentioned in the policy is allowed.
 
-6. **Delete all resources**
+> **Delete all resources**
 
 Don't forget to clean up the resources.
 
