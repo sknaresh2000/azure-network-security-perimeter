@@ -46,33 +46,33 @@ The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspa
 
   💡 **Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
 
-> **Enable NSP and secure the resources**
+- **Enable NSP and secure the resources**
 
-Create Network Security Perimeter and associate all resources to Network Security Perimeter Profile.
+  Create Network Security Perimeter and associate all resources to Network Security Perimeter Profile.
 
-`terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true"`
+  `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true"`
 
-> **Test Encryption & Event Hub**
+- **Test Encryption & Event Hub**
 
-Enable encryption now as NSP is configured and all resources are associated to the profile.
+  Enable encryption now as NSP is configured and all resources are associated to the profile.
 
-`terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true" -var "enable_encryption=true"`
+  `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_NSP=true" -var "enable_encryption=true"`
 
-💡 **Expected Result:** Encryption now works! The storage account is successfully able to retrieve the encryption key from Key Vault. Event Hub now works, because NSP automatically allows the local client's IP through the Terraform-defined inbound access rules.
+  💡 **Expected Result:** Encryption now works! The storage account is successfully able to retrieve the encryption key from Key Vault. Event Hub now works, because NSP automatically allows the local client's IP through the Terraform-defined inbound access rules.
 
-> **(*OPTIONAL*) Configure Azure Policy for NSP**
+- **(*OPTIONAL*) Configure Azure Policy for NSP**
 
-This is totally optional but if you would like to ensure only allowed ip ranges are configured for inbound access rules in NSP. Once below command is run, try to update the inbound access rules by changing to a different IP range. 
+  This is totally optional but if you would like to ensure only allowed ip ranges are configured for inbound access rules in NSP. Once below command is run, try to update the inbound access rules by changing to a different IP range. 
 
-`terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_nsp=true" -var "enable_encryption=true" -var "configure_nsp_policy=true"`
+  `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_nsp=true" -var "enable_encryption=true" -var "configure_nsp_policy=true"`
 
-💡 **Expected Result:** Azure Policy kicks in and ensures only allowed ranges mentioned in the policy is allowed.
+  💡 **Expected Result:** Azure Policy kicks in and ensures only allowed ranges mentioned in the policy is allowed.
 
-> **Delete all resources**
+- **Delete all resources**
 
-Don't forget to clean up the resources.
+  Don't forget to clean up the resources.
 
-`terraform destroy -var "subscription_id=<your_subscription_id>"`
+  `terraform destroy -var "subscription_id=<your_subscription_id>"`
 
 ## Terraform-Documentation
 
