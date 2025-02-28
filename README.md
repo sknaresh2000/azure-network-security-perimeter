@@ -1,3 +1,37 @@
+# **Azure Network Security Perimeter**
+
+# Contents
+[Introduction](#introduction)
+[Objectives](#objectives)
+
+## Introduction
+Azure Network Security Perimeter(NSP) allows you to define a logical boundary around certain PaaS resources, ensuring network isolation and controlled access. For instance, in the past, we allowed Azure trusted services to access Key Vault. This meant any trusted services in the tenant could connect to Key Vault, making it less restrictive. Ofcourse, you still need RBAC permissions to retrieve the keys. From connectivity perspective, we can now ensure that only resources within a defined security perimeter can interact, eliminating broad connectivity to these services.
+
+NSP also simplifies parent-child resource access control by centralizing access control at the network perimeter level, making it easier to deny all public access on the service level and explicitly allow only approved sources on NSP. Previously this wasnt possible in denying public access and allowing allowed IP list for these services via Azure Policy as the public access parameter is controlled in parent resources but the allowed IP list exists within a child resource and Azure Policy doesnt support multiple resource types with Deny/Modify effect.
+
+## Objectives
+After completing this, you will be able to :
+- Understand about NSP
+- Understand about centralized access control for PaaS services
+- Query Log Analytics workspace and review NSP traffic
+
+## Lab
+The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspace and NSP. Key Vault will be used for Storage Account to enable encryption. Event Hub will be used to demonstrate centralized access control without enabling firewall access on the service level. Log Analytics workspace will be used for sending all of the NSP and service level logs.
+
+![image](images/NSP-AzurePolicy.png)
+
+## Tasks
+1. **Deploy the Required Resources**
+
+Run the following command to deploy Storage Account, Key Vault, Event Hub and Log Analytics Workspace. After successful execution, you'll see all resources created.
+
+`terraform apply -var "subscription_id=<your_subscription_id>"`
+
+2. **Enable Encryption Without NSP**
+
+Enable encryption for Storage Account by providing the key created in previous step and check if it can access Key Vault.
+:bulb: 
+
 ## Requirements
 
 | Name | Version |

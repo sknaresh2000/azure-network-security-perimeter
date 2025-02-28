@@ -66,9 +66,7 @@
                 "displayName": "Allowed IP addresses",
                 "description": "Array with allowed public IP addresses."
             },
-            "defaultValue": [
-                
-            ]
+            "defaultValue": []
         }
     }
 }

@@ -26,3 +26,9 @@ variable "enable_nsp" {
   description = "Enabled Network Security Perimeter"
   default     = false
 }
+
+variable "configure_nsp_policy" {
+  type        = bool
+  description = "Configure Azure Policy for NSP Access Rules ?"
+  default     = false
+}

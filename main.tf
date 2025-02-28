@@ -4,6 +4,32 @@ data "http" "myip" {
   url = "https://ipv4.icanhazip.com"
 }
 
+### Policy to enforce NSP to configure only allowed IP ranges. In this case, its the machine that the code is running from
+### If you dno wish to have this policy, ignore the variable - configure_nsp_policy while running Terraform
+resource "azurerm_policy_definition" "nsp_policy" {
+  for_each     = var.configure_nsp_policy ? toset(["nsp_access_rule_policy"]) : toset([])
+  name         = "NSP-AllowedIP-AccessRules-Policy"
+  policy_type  = "Custom"
+  mode         = local.nsp_policy_file.mode
+  display_name = "NSP Inbound Access Rules should use allowed IP ranges"
+  policy_rule  = jsonencode(local.nsp_policy_file.policyRule)
+  parameters   = jsonencode(local.nsp_policy_file.parameters)
+}
+
+resource "azurerm_subscription_policy_assignment" "nsp_policy_assignment" {
+  for_each             = var.configure_nsp_policy ? toset(["nsp_access_rule_policy"]) : toset([])
+  name                 = "NSP-AllowedIP-AccessRules-Policy"
+  policy_definition_id = azurerm_policy_definition.nsp_policy[each.value].id
+  subscription_id      = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+  parameters           = <<PARAMETERS
+{
+  "allowedIPAddresses": {
+    "value": ${jsonencode(["${chomp(data.http.myip.response_body)}/32"])}
+  }
+} 
+PARAMETERS
+}
+
 resource "azurerm_resource_group" "rg" {
   name     = "rg-nsp-eus"
   location = var.location
@@ -147,11 +173,12 @@ resource "azapi_resource" "inbound_access_rules" {
 }
 
 resource "azapi_resource" "resource_associations" {
-  for_each  = var.enable_nsp ? local.resources_to_associate : {}
-  type      = "Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview"
-  name      = "nsp-associations-${each.value.name}"
-  parent_id = azapi_resource.nsp["nsp"].id
-  location  = var.location
+  depends_on = [azapi_resource.inbound_access_rules]
+  for_each   = var.enable_nsp ? local.resources_to_associate : {}
+  type       = "Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview"
+  name       = "nsp-associations-${each.value.name}"
+  parent_id  = azapi_resource.nsp["nsp"].id
+  location   = var.location
   body = {
     properties = {
       accessMode = "Enforced"
@@ -192,9 +219,14 @@ resource "azurerm_monitor_diagnostic_setting" "paas_resources" {
   enabled_log {
     category_group = "allLogs"
   }
+  metric {
+    category = "AllMetrics"
+    enabled  = false
+  }
 }
 
 locals {
+  nsp_policy_file = jsondecode(file("azure-policy-definition/deny-nsp-ip-rules.json"))
   resources_to_associate = {
     kv = {
       name = azurerm_key_vault.kv.name
