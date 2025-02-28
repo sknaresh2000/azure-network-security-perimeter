@@ -11,10 +11,14 @@
 
 [Terraform-Documentation](#terraform-documentation)
 
+[References](#references)
+
 ## Introduction
 Azure Network Security Perimeter(NSP) allows you to define a logical boundary around certain PaaS resources, ensuring network isolation and controlled access. For instance, in the past, we allowed Azure trusted services to access Key Vault. This meant any trusted services in the tenant could connect to Key Vault, making it less restrictive. Ofcourse, you still need RBAC permissions to retrieve the keys. From connectivity perspective, we can now ensure that only resources within a defined security perimeter can interact, eliminating broad connectivity to these services.
 
-NSP also simplifies parent-child resource access control by centralizing access control at the network perimeter level, making it easier to deny all public access on the service level and explicitly allow only approved sources on NSP. Previously this wasnt possible in denying public access and allowing allowed IP list for these services via Azure Policy as the public access parameter is controlled in parent resources but the allowed IP list exists within a child resource and Azure Policy doesnt support multiple resource types with Deny/Modify effect.
+NSP also simplifies parent-child resource access control by centralizing access control at the network perimeter level, making it easier to deny all public access on the service level and explicitly allow only approved sources on NSP. Previously this wasnt possible in denying public access and allowing required IP ranges list for these services via Azure Policy as the public access parameter is controlled in parent resources but the allowed IP ranges list is controlled within a child resource and Azure Policy doesnt support multiple resource types with Deny/Modify effect.
+
+I have a detailed blog post about this here - 
 
 ## Objectives
 After completing this, you will be able to :
@@ -114,3 +118,8 @@ The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspa
 | <a name="input_location"></a> [location](#input\_location) | Location of the resources that will be deployed in Azure | `string` | `"East US"` | no |
 | <a name="input_subscription_id"></a> [subscription\_id](#input\_subscription\_id) | ID of the subscription where the resources will be deployed | `string` | n/a | yes |
 | <a name="input_configure_nsp_policy"></a> [configure\_nsp\_policy](#input\_sconfigure\_nsp\_policy) | Configure Azure Policy for NSP Access Rules ? | `bool` | `false` | no |
+
+## References
+- https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts
+- https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-diagnostic-logs
+- https://learn.microsoft.com/en-us/azure/templates/microsoft.network/networksecurityperimeters?pivots=deployment-language-terraform
