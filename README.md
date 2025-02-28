@@ -30,21 +30,21 @@ The lab consists of Storage Account, Event Hub, Key Vault, Log Analytics Workspa
 ![image](images/NSP-AzurePolicy.png)
 
 ## Tasks
-> **Deploy the Required Resources**
+- **Deploy the Required Resources**
 
-Run the following command to deploy Storage Account, Key Vault, Event Hub and Log Analytics Workspace. After successful execution, you'll see all resources created.
+  Run the following command to deploy Storage Account, Key Vault, Event Hub and Log Analytics Workspace. After successful execution, you'll see all resources created.
 
-`terraform apply -var "subscription_id=<your_subscription_id>"`
+  `terraform apply -var "subscription_id=<your_subscription_id>"`
 
-> **Enable Encryption Without NSP and Test EventHub**
+- **Enable Encryption Without NSP and Test EventHub**
 
-Enable encryption for Storage Account by providing the key created in previous step and check if it can access Key Vault.
+  Enable encryption for Storage Account by providing the key created in previous step and check if it can access Key Vault.
 
-📌 **NOTE** : You can use POSTMAN and send event to Event Hub utilizing REST API's by following the link - https://learn.microsoft.com/en-us/rest/api/eventhub/send-event
+  📌 **NOTE** : You can use POSTMAN and send event to Event Hub utilizing REST API's by following the link - https://learn.microsoft.com/en-us/rest/api/eventhub/send-event
 
-`terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_encryption=true"`
+  `terraform apply -var "subscription_id=<your_subscription_id>" -var "enable_encryption=true"`
 
-💡 **Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
+  💡 **Expected result**: Encryption fails because Key Vault's public access is denied and Bypass Azure Services is not enabled. Event Hub gets access denied error as public access is disabled.
 
 > **Enable NSP and secure the resources**
 
