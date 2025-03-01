@@ -18,7 +18,7 @@ Azure Network Security Perimeter(NSP) allows you to define a logical boundary ar
 
 NSP also simplifies parent-child resource access control by centralizing access control at the network perimeter level, making it easier to deny all public access on the service level and explicitly allow only approved sources on NSP. Previously this wasnt possible in denying public access and allowing required IP ranges list for these services via Azure Policy as the public access parameter is controlled in parent resources but the allowed IP ranges list is controlled within a child resource and Azure Policy doesnt support multiple resource types with Deny/Modify effect.
 
-I have a detailed blog post about this here - 
+I have a detailed blog post about this here - https://medium.com/@sknaresh2000/strengthening-paas-security-with-azures-network-security-perimeter-79976ac29b05
 
 ## Objectives
 After completing this, you will be able to :
